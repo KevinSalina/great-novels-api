@@ -12,7 +12,7 @@ db.authenticate()
   .then(() => console.log('connected'))
   .catch((err) => console.log('error!', err))
 
-// Author Routes
+// Routes
 app.use('/authors', authorRoutes)
 app.use('/genres', genreRoutes)
 app.use('/titles', titleRoutes)
