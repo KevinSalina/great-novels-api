@@ -37,6 +37,8 @@ fs.createReadStream(path)
     }, {})
 
 
+    console.log(titleByName)
+
 
     for (const novel of novelGenres) {
       for (const genre of novel.genre) {
