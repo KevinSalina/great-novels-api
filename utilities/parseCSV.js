@@ -5,53 +5,59 @@ const csv = require('fast-csv')
 const models = require('../models')
 const { model } = require('../config/database')
 
-const path = process.cwd() + '/novels.csv'
-const novels = []
 
-fs.createReadStream(path)
-  .pipe(csv.parse({ headers: ['title', 'author', 'genre'], renameHeaders: true }))
-  .on('error', error => console.error(error))
-  .on('data', row => novels.push(row))
-  .on('end', async () => {
-    let novelGenres = novels.map(({ author, ...rest }) => {
-      rest.genre = rest.genre.split(',')
+const linkingTableInsert = () => {
+  const path = process.cwd() + '/novels.csv'
+  const novels = []
 
-      return rest
-    })
+  fs.createReadStream(path)
+    .pipe(csv.parse({ headers: ['title', 'author', 'genre'], renameHeaders: true }))
+    .on('error', error => console.error(error))
+    .on('data', row => novels.push(row))
+    .on('end', async () => {
+      let novelGenres = novels.map(({ author, ...rest }) => {
+        rest.genre = rest.genre.split(',')
 
-    let i = 1
+        return rest
+      })
 
-    const titles = await models.Title.findAll()
-    const genres = await models.Genre.findAll()
+      const titles = await models.Title.findAll()
+      const genres = await models.Genre.findAll()
 
-    const titleByName = titles.reduce((a, title) => {
-      a[title.name] = title
+      const titleByName = titles.reduce((a, title) => {
+        a[title.name] = title
 
-      return a
-    }, {})
+        return a
+      }, {})
 
-    const genreByName = genres.reduce((a, genre) => {
-      a[genre.name] = genre
+      const genreByName = genres.reduce((a, genre) => {
+        a[genre.name] = genre
 
-      return a
-    }, {})
+        return a
+      }, {})
 
+      console.log(genreByName)
+      let returnData = []
 
-    console.log(titleByName)
+      for (const novel of novelGenres) {
+        for (const genre of novel.genre) {
+          const titleId = titleByName[novel.title].id
+          const genreId = genreByName[genre].id
 
+          // await models.TitleGenre.create({
+          //   titleId,
+          //   genreId
+          // })
 
-    for (const novel of novelGenres) {
-      for (const genre of novel.genre) {
-        // console.log(`INSERT INTO genres (titleId, genreId) VALUES (${i}, '${genre}')`)
-        const titleId = titleByName[novel.title].id
-        const genreId = genreByName[genre].id
-
-        await models.TitleGenre.create({
-          titleId,
-          genreId
-        })
+          returnData.push({ titleId, genreId })
+        }
       }
 
-      i++
-    }
-  })
+      return (returnData)
+    })
+}
+
+linkingTableInsert()
+
+
+module.exports = linkingTableInsert
