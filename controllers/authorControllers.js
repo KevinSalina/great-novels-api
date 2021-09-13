@@ -1,4 +1,5 @@
 const models = require('../models')
+const { Op } = require('sequelize')
 
 const getAuthors = async (req, res) => {
   const allAuthors = await models.Author.findAll()
@@ -10,7 +11,12 @@ const getAuthorsById = async (req, res) => {
   const { id } = req.params
 
   const author = await models.Author.findOne({
-    where: { id },
+    where: {
+      [Op.or]: [
+        { id: id },
+        { name: { [Op.substring]: `${id}` } }
+      ]
+    },
     include: [{
       model: models.Title,
       include: [{
